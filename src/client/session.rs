@@ -3,7 +3,7 @@ use tokio::io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt};
 
 use super::{
     error::Error,
-    fs::{File, Metadata, ReadDir},
+    fs::{File, Metadata, ReadDir, ReadDirStream},
     rawsession::{Limits, SftpResult},
     RawSftpSession,
 };
@@ -203,6 +203,18 @@ impl SftpSession {
         Ok(ReadDir {
             entries: files.into(),
         })
+    }
+
+    /// Returns a stream over the entries within a directory.
+    ///
+    /// Unlike [`read_dir`](SftpSession::read_dir), which buffers all entries before returning,
+    /// this method returns a [`ReadDirStream`] that yields entries lazily as they are fetched
+    /// from the server in batches.
+    ///
+    /// The directory handle is automatically closed when the stream reaches EOF or is dropped.
+    pub async fn read_dir_stream<P: Into<String>>(&self, path: P) -> SftpResult<ReadDirStream> {
+        let handle = self.session.opendir(path).await?.handle;
+        Ok(ReadDirStream::new(self.session.clone(), handle))
     }
 
     /// Reads a symbolic link, returning the file that the link points to.

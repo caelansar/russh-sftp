@@ -8,6 +8,6 @@ mod file;
 
 use crate::protocol::FileAttributes;
 
-pub use dir::{DirEntry, ReadDir};
+pub use dir::{DirEntry, ReadDir, ReadDirStream};
 pub use file::File;
 pub type Metadata = FileAttributes;
